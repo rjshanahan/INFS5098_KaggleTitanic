@@ -146,31 +146,37 @@ select(Name, title, Survived)
 
 ## title consolidation
 
-## function for assigning a new title value to old title(s) 
-# https://github.com/wehrley/wehrley.github.io/blob/master/SOUPTONUTS.md
-changeTitles <- function(data, old.titles, new.title) {
-  for (honorific in old.titles) {
-    data$title[ which(data$title == honorific)] <- new.title
-  }
-  return (data$title)
-}
+# define dataframe for title reclassifier lookup
+title_type <- c('Capt'='Nobility',
+              'Col'='Nobility',
+              'Don'='Nobility',
+              'Dona'='Nobility',
+              'Dr'='Nobility',
+              'Jonkheer'='Nobility',
+              'Lady'='Nobility',
+              'Major'='Nobility',
+              'Rev'='Respected',
+              'Sir'='Respected',
+              'the Countess'='Nobility',
+              'Mme'='Mrs',
+              'Ms'='Mrs',
+              'Mrs'='Mrs',
+              'Mlle'='Miss',
+              'Miss'='Miss',
+              'Mr'='Mr',
+              'Master'='Master')
 
-# coerce to character
-titanic_combi$title <- as.character(titanic_combi$title)
+#make sure title is factor
+titanic_combi$title <- as.factor(titanic_combi$title)
 
-titanic_combi$title <- changeTitles(titanic_combi, 
-                               c("Capt", "Col", "Don", "Dr", 
-                                 "Jonkheer", "Lady", "Major", 
-                                 "Rev", "Sir", "the Countess"),
-                               "Nobility")
-titanic_combi$title <- changeTitles(titanic_combi, c("Mme", "Ms"), "Mrs")
-titanic_combi$title <- changeTitles(titanic_combi, c("Mlle"), "Miss")
+#recode variable
+titanic_combi$title <- title_type[titanic_combi$title]
 
-#restore to FACTOR
+#coerce
 titanic_combi$title <- as.factor(titanic_combi$title)
 
 #inspect
-table(titanic_combi$title, titanic_combi$Survived)
+table(titanic_combi$title)
 
 ########## 1.2 add new variable for last name ########## 
 titanic_combi$lastname <- sapply(titanic_combi$Name, FUN=function(x) {strsplit(x, split='[,.]')[[1]][1]})
