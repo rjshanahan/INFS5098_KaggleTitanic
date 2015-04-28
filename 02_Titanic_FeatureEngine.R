@@ -5,7 +5,7 @@ library(rpart)
 
 #Richard Shanahan  
 #https://github.com/rjshanahan  
-#6 April 2015
+#28 April 2015
   
 #INFS 5098: PROJECT: R code to cleanse Kaggle Titanic data set inc. feature engineering
 
@@ -60,7 +60,7 @@ titanic_test <- titanic_test_raw
 
 
 # OR LOCAL IMPORT
-titanic_train <- read.csv('/yourfilepath/train.csv',
+titanic_train <- read.csv('/Users/rjshanahan/Documents/DATA SCIENCE/6. Data Science Professional Dev 1_INFS5098/2. Assignment/3. PART 2_Kaggle Group/99. Kaggle Project/99. Data/train.csv',
                          header=T,
                          sep=",",
                          quote='"',
@@ -83,7 +83,7 @@ titanic_train <- read.csv('/yourfilepath/train.csv',
                          fill=T)
 
 ## build Titanic TEST dataframe from data
-titanic_test <- read.csv('/yourfilepath/test.csv',
+titanic_test <- read.csv('/Users/rjshanahan/Documents/DATA SCIENCE/6. Data Science Professional Dev 1_INFS5098/2. Assignment/3. PART 2_Kaggle Group/99. Kaggle Project/99. Data/test.csv',
                          header=T,
                          sep=",",
                          quote='"',
@@ -106,12 +106,16 @@ titanic_test <- read.csv('/yourfilepath/test.csv',
                          fill=T)
 
 # create placeholder for survived in test
-titanic_test$Survived <- NA
+titanic_test$Survived <- 'model'
 
 #combine dataframes for feature engineering
 titanic_combi <- rbind(titanic_train, titanic_test) 
 
 ############ 0. clean up NA values #############
+
+# 0. identify variables with NA values
+
+colSums(is.na(titanic_combi)) 
 
 # 1. Age NAs
 
@@ -147,7 +151,7 @@ select(Name, title, Survived)
 
 ## title consolidation
 
-# define dataframe for title reclassifier lookup
+# define vector for title reclassifier lookup
 title_type <- c('Capt'='Nobility',
               'Col'='Nobility',
               'Don'='Nobility',
@@ -171,13 +175,19 @@ title_type <- c('Capt'='Nobility',
 titanic_combi$title <- as.factor(titanic_combi$title)
 
 #recode variable
-titanic_combi$title <- title_type[titanic_combi$title]
+titanic_combi$titlegroup <- title_type[titanic_combi$title]
 
 #coerce
 titanic_combi$title <- as.factor(titanic_combi$title)
+titanic_combi$titlegroup <- as.factor(titanic_combi$titlegroup)
 
 #inspect
 table(titanic_combi$title)
+
+titanic_combi %>%
+  select(Fare, title, Name, SibSp, familysize, Survived) %>%
+  filter(Fare > 15)
+
 
 ########## 1.2 add new variable for last name ########## 
 titanic_combi$lastname <- sapply(titanic_combi$Name, FUN=function(x) {strsplit(x, split='[,.]')[[1]][1]})
@@ -331,6 +341,7 @@ titanic_combi$familysize <- as.factor(titanic_combi$familysize)
 titanic_combi$childage <- as.factor(titanic_combi$childage)
 titanic_combi$marriagelength <- as.factor(titanic_combi$marriagelength)
 
+
 ##########  5. Fare Related Variables ########## 
 
 ########## 5.1 add variable for fare classification ########## 
@@ -361,7 +372,6 @@ table(titanic_combi$classregion, titanic_combi$Survived)
 
 ############ 6. split dataframes for TRAIN and TEST ###############
 
-
 titanic_train <- titanic_combi[1:891,]
 titanic_test <- titanic_combi[892:1309,]
 
@@ -372,3 +382,4 @@ str(titanic_test)
 
 write.csv(titanic_train, file = "titanic_train.csv", row.names = FALSE)
 write.csv(titanic_test, file = "titanic_test.csv", row.names = FALSE)
+
