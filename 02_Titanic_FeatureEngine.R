@@ -1,6 +1,7 @@
 # load required packages
 library(dplyr)
 library(RCurl)
+library(rpart)
 
 #Richard Shanahan  
 #https://github.com/rjshanahan  
