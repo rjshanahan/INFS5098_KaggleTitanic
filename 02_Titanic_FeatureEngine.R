@@ -1,10 +1,11 @@
 # load required packages
 library(dplyr)
-library(RCurl)
-library(rpart)
+library(httr)
+library(devtools)
 
 #Richard Shanahan  
 #https://github.com/rjshanahan  
+#https://gist.github.com/rjshanahan
 #28 April 2015
   
 #INFS 5098: PROJECT: R code to cleanse Kaggle Titanic data set inc. feature engineering
@@ -13,97 +14,72 @@ library(rpart)
 
 ##### 0. build Titanic dataframes ######
 
-git_path <- "https://raw.github.com/rjshanahan/INFS5098_KaggleTitanic/master/"
+git_path <- 'https://raw.github.com/rjshanahan/INFS5098_KaggleTitanic/master/'
 train_csv <- "train.csv"
 test_csv <- "test.csv"
 missing_types <- c("NA", "")
 
-titanic_train_raw <- read.csv(getURI(paste(git_path, train_csv, sep="")), 
-                              colClasses=c(
-                                'integer',   # PassengerId
-                                'factor',    # Survived 
-                                'factor',    # Pclass
-                                'character', # Name
-                                'factor',    # Sex
-                                'numeric',   # Age
-                                'integer',   # SibSp
-                                'integer',   # Parch
-                                'character', # Ticket
-                                'numeric',   # Fare
-                                'character', # Cabin
-                                'factor'),   # Embarked
-                              na.strings=missing_types                          
-                              )
+# source function from github gist to download data from github raw
+# The functions' gist ID is 682dea6019921d060730
+source_gist("682dea6019921d060730")     # TRAIN dataset
+source_gist("2897218b90c21225d6cb")     # TEST dataset
 
+# build Titanic TRAIN dataframe from site
+
+titanic_train_raw <- source_GitHubData_train(url = paste(git_path, train_csv, sep=""))
 titanic_train <- titanic_train_raw
 
 # build Titanic TEST dataframe from site
 
-titanic_test_raw <- read.csv(getURI(paste(git_path, test_csv, sep="")), 
-                              colClasses=c(
-                                'integer',   # PassengerId
-                                #'factor',    # Survived - not present in TEST
-                                'factor',    # Pclass
-                                'character', # Name
-                                'factor',    # Sex
-                                'numeric',   # Age
-                                'integer',   # SibSp
-                                'integer',   # Parch
-                                'character', # Ticket
-                                'numeric',   # Fare
-                                'character', # Cabin
-                                'factor'),   # Embarked
-                              na.strings=missing_types                          
-)
-
+titanic_test_raw <- source_GitHubData_test(url = paste(git_path, test_csv, sep=""))
 titanic_test <- titanic_test_raw
 
 
 # OR LOCAL IMPORT
-titanic_train <- read.csv('/Users/rjshanahan/Documents/DATA SCIENCE/6. Data Science Professional Dev 1_INFS5098/2. Assignment/3. PART 2_Kaggle Group/99. Kaggle Project/99. Data/train.csv',
-                         header=T,
-                         sep=",",
-                         quote='"',
-                         colClasses=c(
-                                      'integer',   # PassengerId
-                                      'factor',    # Survived 
-                                      'factor',    # Pclass
-                                      'character', # Name
-                                      'factor',    # Sex
-                                      'numeric',   # Age
-                                      'integer',   # SibSp
-                                      'integer',   # Parch
-                                      'character', # Ticket
-                                      'numeric',   # Fare
-                                      'character', # Cabin
-                                      'factor'     # Embarked
-                         ),
-                         strip.white=T,
-                         stringsAsFactors=F,
-                         fill=T)
+# titanic_train <- read.csv('/YOURFILEPATH/train.csv',
+#                          header=T,
+#                          sep=",",
+#                          quote='"',
+#                          colClasses=c(
+#                                       'integer',   # PassengerId
+#                                       'factor',    # Survived 
+#                                       'factor',    # Pclass
+#                                       'character', # Name
+#                                       'factor',    # Sex
+#                                       'numeric',   # Age
+#                                       'integer',   # SibSp
+#                                       'integer',   # Parch
+#                                       'character', # Ticket
+#                                       'numeric',   # Fare
+#                                       'character', # Cabin
+#                                       'factor'     # Embarked
+#                          ),
+#                          strip.white=T,
+#                          stringsAsFactors=F,
+#                          fill=T)
 
 ## build Titanic TEST dataframe from data
-titanic_test <- read.csv('/Users/rjshanahan/Documents/DATA SCIENCE/6. Data Science Professional Dev 1_INFS5098/2. Assignment/3. PART 2_Kaggle Group/99. Kaggle Project/99. Data/test.csv',
-                         header=T,
-                         sep=",",
-                         quote='"',
-                         colClasses=c(
-                           'integer',   # PassengerId
-                           #'factor',    # Survived - not present in TEST
-                           'factor',    # Pclass
-                           'character', # Name
-                           'factor',    # Sex
-                           'numeric',   # Age
-                           'integer',   # SibSp
-                           'integer',   # Parch
-                           'character', # Ticket
-                           'numeric',   # Fare
-                           'character', # Cabin
-                           'factor'     # Embarked
-                         ),
-                         strip.white=T,
-                         stringsAsFactors=F,
-                         fill=T)
+# titanic_test <- read.csv('/YOURFILEPATH/test.csv',
+#                          header=T,
+#                          sep=",",
+#                          quote='"',
+#                          colClasses=c(
+#                            'integer',   # PassengerId
+#                            #'factor',    # Survived - not present in TEST
+#                            'factor',    # Pclass
+#                            'character', # Name
+#                            'factor',    # Sex
+#                            'numeric',   # Age
+#                            'integer',   # SibSp
+#                            'integer',   # Parch
+#                            'character', # Ticket
+#                            'numeric',   # Fare
+#                            'character', # Cabin
+#                            'factor'     # Embarked
+#                          ),
+#                          strip.white=T,
+#                          stringsAsFactors=F,
+#                          fill=T)
 
 # create placeholder for survived in test
 titanic_test$Survived <- 'model'
@@ -308,31 +284,51 @@ titanic_combi[1:20,] %>%
   
 ########## 3.3 add variable for long or short term married couple ##########  
 # assumes that if passenger age is less than average 'married' passenger age then 'short' term married
-# note: average age of married folk - assuming SibSp=1 indicates spouse travelling only - Age relatively normally distributed
+# assumes SibSp = 1 indicates only spouse on board
+# applies a minimum marriage age of 18 years
+# lastname the same (not implemented)
 
-avgmarriage <- mean((subset(titanic_combi, titanic_combi$SibSp == 1 && !is.null(titanic_combi$Age))$Age), na.rm=T)
+avgmarriage <- mean((subset(titanic_combi, 
+                            titanic_combi$SibSp == 1 & 
+                              !is.null(titanic_combi$Age) &
+                              titanic_combi$Age >= 18)$Age), 
+                    na.rm=T)
 
-titanic_combi <- mutate(titanic_combi, marriagelength = as.factor(ifelse(Age > avgmarriage,
-                                                               "Long",
-                                                               "Short")))
+titanic_combi <- mutate(titanic_combi, marriagelength = as.factor(ifelse(SibSp == 1,
+                                                                        (ifelse(Age >= avgmarriage,
+                                                                        "Long",
+                                                                        "Short")),
+                                                                  "Unknown")))
 #inspect
 titanic_combi[1:20,] %>%
-  select(Name, SibSp, Parch, familysize, marriagelength, Survived)
+  select(Name, Age, SibSp, Parch, familysize, marriagelength, Survived)
 
 table(titanic_combi$marriagelength, titanic_combi$Survived)
 
 ########## 3.4 add variable for family with young children or old children ########## 
 # assumes that if passenger age is greater than average passenger with children age then 'old' children, otherwise 'young'
 # note: average age of people with children - assuming Parch is not 0 and SibSp=1 - double counting of parents an issue - Age relatively normally distributed
+# assumes Parch == 2 indicates children travelling with both parents - disregards if this indicates 2 children
+# assumes SibSp == 1 means spouse is travelling - disregards if this means 'siblings'
+# 
 
-avgchildage <- mean((subset(titanic_combi, titanic_combi$Parch > 0 & titanic_combi$SibSp == 1 & !is.null(titanic_combi$Age))$Age), na.rm=T)
+avgchildage <- mean((subset(titanic_combi, 
+                              titanic_combi$Parch >= 1 & 
+                              titanic_combi$Parch <= 2 &
+                              as.numeric(titanic_combi$familysize) > 2 & 
+                              !is.null(titanic_combi$Age))$Age), 
+                    na.rm=T)
 
-titanic_combi <- mutate(titanic_combi, childage = as.factor(ifelse(Age > avgchildage,
-                                                                         "Old",
-                                                                         "Young")))
+titanic_combi <- mutate(titanic_combi, childage = as.factor(ifelse(as.numeric(familysize) >= 2,
+                                                                   ifelse(Age >= avgchildage,
+                                                                          "Old",
+                                                                          "Young"),
+                                                                   "Unknown")))
+  
+  
 #inspect
 titanic_combi[1:20,] %>%
-  select(Name, SibSp, Parch, familysize, marriagelength, childage, Survived)
+  select(Name, Age, SibSp, Parch, familysize, marriagelength, childage, Survived)
 
 table(titanic_combi$childage, titanic_combi$Survived)
 
