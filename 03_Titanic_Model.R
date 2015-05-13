@@ -19,8 +19,8 @@ library(party)
 #remove cap on partitions
 fit <- rpart(Survived ~ Pclass + Sex + Age + SibSp + Parch + Fare + 
                Embarked + title + familysize + nickname + altname + iceberg + deck +
-               subclass + faregroup + classregion, 
-             data=titanic_train, 
+               subclass + faregroup + classregion + childage + marriagelength, 
+             data=droplevels(titanic_train), 
              method="class",
              control=rpart.control(minsplit=2, cp=0))
 fit
@@ -29,9 +29,9 @@ fit
 #new.fit <- prp(fit,snip=TRUE)$obj
 
 #pretty randomforest plot - expensive to run
-library(rattle)
-library(rpart.plot)
-library(RColorBrewer)
+#library(rattle)
+#library(rpart.plot)
+#library(RColorBrewer)
 
 #fancyRpartPlot(fit)             #generate plot
 
@@ -72,15 +72,21 @@ write.csv(submit, file = "kagglesubmission_randomforest.csv", row.names = FALSE)
 ############ 3. run prediction model using 'ctree' package ###############
 library(party)
 
-fit <- ctree(Survived ~ Pclass + Sex + Age + SibSp + Parch + Fare + 
-               Embarked + title + familysize + nickname + altname + iceberg + deck +
-               subclass + faregroup + classregion, 
-             data=titanic_train)
+fit <- ctree(droplevels(Survived) ~ Pclass + Sex + Age + SibSp + Parch + Fare + 
+               Embarked + titlegroup + familysize + nickname + altname + iceberg + deck +
+               subclass + faregroup + classregion + childage + marriagelength, 
+             data=titanic_train,
+             controls=cforest_unbiased(ntree=4000, mtry=2))
+# 
+# fit <- ctree(droplevels(Survived) ~ Pclass + Sex + Age + SibSp + Parch + Fare + 
+#                Embarked + titlegroup + familysize + deck + side , 
+#              data=titanic_train,
+#              controls=cforest_unbiased(ntree=4000, mtry=2))
 
 plot(fit)
 
 # model execution
-Prediction <- predict(fit, titanic_test, type="response")     #for ctree
+Prediction <- predict(fit, titanic_test, OOB=T, type="response")     #for ctree
 
 # create dataframe and submission file for Kaggle
 submit <- data.frame(PassengerId = titanic_test$PassengerId, Survived = as.vector(Prediction))
@@ -156,5 +162,3 @@ Prediction <- ifelse(titanic_test$pred < 0.5,
 submit <- data.frame(PassengerId = titanic_test$PassengerId, Survived = as.vector(Prediction))
 
 write.csv(submit, file = "kagglesubmission_logit.csv", row.names = FALSE)
-
-
