@@ -55,3 +55,4 @@ Submissions using this code form part of the Kaggle team below:
 <https://github.com/wehrley/wehrley.github.io/blob/master/SOUPTONUTS.md>
 <http://trevorstephens.com/post/72916401642/titanic-getting-started-with-r>
 <http://www.slideshare.net/michellebanzondarling/final-pink-panthers0331>
+<https://www.kaggle.com/c/titanic/prospector#208>
