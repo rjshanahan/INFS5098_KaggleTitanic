@@ -62,6 +62,21 @@ varImpPlot(fit)
 #ACCURACY: how worse the model performs without each variable, so a high decrease in accuracy would be expected for very predictive variables
 #GINI: measures how pure the nodes are at the end of the tree. Again it tests to see the result if each variable is taken out and a high score means the variable was important.
 
+#code to generate prettier variable importance plot
+varImpdf <- data.frame(var = factor(names(fit$variable.importance)),
+                       imp = fit$variable.importance,
+                       row.names=NULL)
+
+ggplot(data = varImpdf,
+       aes(x=reorder(varImpdf$var, -varImpdf$imp),
+           y=imp,
+           fill=var)) +
+  #scale_x_discrete(limits = varorder) +
+  xlab("Titanic Attribute - note: lowercase vars are produced through feature selection/engineering") + 
+  ylab("Variable Importance") + 
+  geom_bar(stat="identity") +
+  ggtitle("Kaggle Titanic: Variable Importance Ratings using 'randomForest'")
+
 # model execution
 Prediction <- predict(fit, titanic_test)                      #for rpart and randomforest
 
